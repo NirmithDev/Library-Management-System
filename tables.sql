@@ -59,9 +59,7 @@ create table history(
 --reserve book table
 create table Reserve(
     ReserveID   integer Not Null,
-    clientID    Integer, 
-    dueDate     varchar(20),
-    ReserveDate varchar(6),
+    clientID    integer,
     bookID      varchar(6),
     status      varchar(40),
     primary key (ReserveID),
@@ -158,7 +156,7 @@ Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('03453
 insert or Replace into Maintains (quantity,bookID) values (20,'0199537976');
 insert or Replace into Maintains (quantity,bookID) values (10,'1510096004');
 insert or Replace into Maintains (quantity,bookID) values (30,'1515252604');
-insert or Replace into Maintains (quantity,bookID) values (1,'0590353403');
+insert or Replace into Maintains (quantity,bookID) values (0,'0590353403');
 insert or Replace into Maintains (quantity,bookID) values (7,'0439064864');
 insert or Replace into Maintains (quantity,bookID) values (20,'0747542155');
 insert or Replace into Maintains (quantity,bookID) values (2,'9780261102');
@@ -167,9 +165,9 @@ insert or Replace into Maintains (quantity,bookID) values (15,'0345339738');
 --Select * from Maintains;
 
 --adding temporary data for reserving a book for EXISTING users
-insert or replace into Reserve (clientID,dueDate,ReserveDate,BookID,status) values (1,'31/05/2022','31/03/2022','0199537976','borrowed');
-insert or replace into Reserve (clientID,dueDate,ReserveDate,BookID,status) values (2,'31/05/2022','31/03/2022','1515252604','borrowed');
-insert or replace into Reserve (clientID,dueDate,ReserveDate,BookID,status) values (1,'31/03/2022','31/01/2022','1515252604','returned');
+insert or replace into Reserve (clientID,BookID,status) values (1,'0199537976','borrowed');
+insert or replace into Reserve (clientID,BookID,status) values (2,'1515252604','borrowed');
+insert or replace into Reserve (clientID,BookID,status) values (1,'1515252604','returned');
 --Select * from Reserve;
 
 --adding temporary TRACKING data for EXISTING USERS AND STAFF
