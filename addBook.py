@@ -69,12 +69,19 @@ class AddBook(Toplevel):
         pageNum=self.ent_pageNum.get()
         if(name and author and isbn and genre and pageNum !=""):
             try:
-                query="INSERT INTO 'Books' (ISBN,title,author,genre,page_count) VALUES(?,?,?,?,?)"
-                cur.execute(query,(isbn,name,author,genre,pageNum))
+                q="SELECT count(*) from Books"
+                b=cur.execute(q).fetchall()
+                print(b)
+                print(type(b))
+                c=int(b[0][0])+1
+                print(c)
+                query="INSERT INTO 'Books' (ISBN,title,author,genre,page_count,id) VALUES(?,?,?,?,?,?)"
+                cur.execute(query,(isbn,name,author,genre,pageNum,c))
+                quer_for_quantity="INSERT INTO Maintains (quantity,bookID) VALUES(?,?)"
+                cur.execute(quer_for_quantity,(1,isbn))
                 conn.commit()
                 messagebox.showinfo("Success","Successfully added the book",icon="info")
             except:
                 messagebox.showerror("Failed to add to DB","Cannot add to DB",icon="warning")
         else:
             messagebox.showerror("Failed to add to DB","Cannot add to DB",icon="warning")
-

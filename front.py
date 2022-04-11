@@ -1,16 +1,19 @@
 #create UI design for the pages 
 from audioop import add
 from cgitb import text
+from email import message
 from itertools import count
 from msilib.schema import Font
 from tkinter import *
 from tkinter import font
 from tkinter import ttk
+from tkinter import messagebox
 from turtle import st
 import sqlite3
 import addBook
 import addPublisher
 import addMember
+import givebook
 
 myDatabase = 'table.db'
 conn = sqlite3.connect(myDatabase)
@@ -22,24 +25,47 @@ class Main(object):
     def __init__(self,master):
         self.master = master
 
+        #
+        def displayStatistics(evt):
+            count_book=cur.execute("SELECT count(*) From Books").fetchall()
+            count_reserrve=cur.execute(("Select count(*) From Reserve where status=?"),("borrowed",)).fetchall()
+            count_staff=cur.execute("Select count(*) from staff").fetchall()
+            count_client=cur.execute("Select count(*) from clients").fetchall()
+            count_totalBook=cur.execute("SELECT quantity From Maintains").fetchall()
+            print(count_totalBook)
+            sum_totalBook=0
+            for a in count_totalBook:
+                print(a)
+                sum_totalBook+=a[0]
+            sum_totalBook+=count_reserrve[0][0]
+            print(sum_totalBook)
+            self.lblBookCount.config(text='Total Number of UNIQUE Books: '+str(count_book[0][0]))
+            self.lblMemberCount.config(text='Total Number of Members: '+str(count_staff[0][0]+count_client[0][0]))
+            self.lblTakenCount.config(text='Total Number of Borrowed Books: '+str(count_reserrve[0][0]))
+            self.lblStaffCount.config(text='Total Number of Officers: '+str(count_staff[0][0]))
+            self.lblClientCount.config(text='Total Number of Client: '+str(count_client[0][0]))
+            self.lblTotalBook.config(text='Total Number of Books: '+str(sum_totalBook))
+            displayBooks(self)
+
         #display books for admin to view
         def displayBooks(self):
             books=cur.execute("Select * FROM Books").fetchall()
             count=0
+            self.list_books.delete(0,END)
             for b in books:
                 print(b)
-                self.list_books.insert(count,str(b[0]+"-"+b[1]))
+                self.list_books.insert(count,str(str(b[5])+"-"+b[0]+"-"+b[1]))
                 count+=1
             def bookInfo(evt):
                 value = str(self.list_books.get(self.list_books.curselection()))
-                id=value.split('-')[0]
+                id=value.split('-')[1]
                 #print(id)
                 book=cur.execute("SELECT * FROM Books WHERE ISBN=?",(id,))
                 #print(book)
                 book_information=book.fetchall()
                 bookQ=cur.execute(f"SELECT quantity FROM Maintains WHERE bookID=?",(id,))
                 bookQ=cur.fetchall()
-                #print("here",bookQ)
+                print("here",bookQ)
                 #print(book_information)
                 self.list_details.delete(0,'end')
                 self.list_details.insert(0,"ISBN: "+book_information[0][0])
@@ -55,8 +81,16 @@ class Main(object):
                 else:
                     self.list_details.insert(6,"BOOK IS AVAILABLE")
 
+            def doubleClick(evt):
+                global given_id
+                value=str(self.list_books.get(self.list_books.curselection()))
+                given_id=value.split('-')[0]
+                give_book=self.GiveBook()
 
             self.list_books.bind('<<ListboxSelect>>',bookInfo)
+            self.tabs.bind('<<NotebookTabChanged>>',displayStatistics)
+            # self.tabs.bind('<ButtonRelease-1>',displayBooks)
+            self.list_books.bind('<Double-Button-1>',doubleClick)
 
         mainFrame = Frame(self.master)
         mainFrame.pack()
@@ -115,9 +149,9 @@ class Main(object):
         self.btnmember=Button(topFrame,text='Add New Member',compound=LEFT,font='arial 12',command=self.addMem)
         self.btnmember.pack(side=LEFT,padx=10)
         #lend book
-        self.btnlend=Button(topFrame,text='Lend Book',compound=LEFT,font='arial 12')
+        '''self.btnlend=Button(topFrame,text='Lend Book',compound=LEFT,font='arial 12',command=self.giveBook)
         self.btnlend.pack(side=LEFT,padx=10)
-        
+        '''
         #Tabs in main page for accessibility
         self.tabs = ttk.Notebook(centerLeftFrame,width=850,height=660)
         self.tabs.pack()
@@ -137,13 +171,20 @@ class Main(object):
         
         #stats
         self.lblBookCount = Label(self.tab2,text="",pady=20,font='Helvetica 12')
-        self.lblBookCount.grid(row=0)
+        self.lblBookCount.grid(row=1,sticky=W)
         self.lblMemberCount=Label(self.tab2,text="",pady=20,font='Helvetica 12')
-        self.lblMemberCount.grid(row=1,sticky=W)
+        self.lblMemberCount.grid(row=2,sticky=W)
         self.lblTakenCount=Label(self.tab2,text="",pady=20,font='Helvetica 12')
-        self.lblTakenCount.grid(row=2,sticky=W)
+        self.lblTakenCount.grid(row=3,sticky=W)
+        self.lblStaffCount=Label(self.tab2,text="",pady=20,font='Helvetica 12')
+        self.lblStaffCount.grid(row=4,sticky=W)
+        self.lblClientCount=Label(self.tab2,text="",pady=20,font='Helvetica 12')
+        self.lblClientCount.grid(row=5,sticky=W)
+        self.lblTotalBook=Label(self.tab2,text="",pady=20,font='Helvetica 12')
+        self.lblTotalBook.grid(row=6,sticky=W)
 
         displayBooks(self)
+        displayStatistics(self)
 
     def addBook(self):
         add=addBook.AddBook()
@@ -154,6 +195,83 @@ class Main(object):
     def addMem(self):
         add=addMember.AddMember()
     
+    class GiveBook(Toplevel):
+        def __init__(self):
+            Toplevel.__init__(self)
+            self.geometry("650x750+550+200")
+            self.title("Lend Book")
+            global given_id
+            self.book_id=given_id
+            self.resizable(False,False)
+            books=cur.execute("SELECT * from Books").fetchall()
+            listBook=[]
+            for b in books:
+                listBook.append(str(str(b[5])+"-"+b[0]+"-"+b[1]))
+            members=cur.execute("SELECT * from clients").fetchall()
+            listMember=[]
+            for m in members:
+                listMember.append(str(str(m[0])+"-"+m[1]))
+            #frames
+            self.topFrame=Frame(self,height=100,bg='white')
+            self.topFrame.pack(fill=X)
+            self.bottomFrame=Frame(self,height=550,bg='#CCFFE5')
+            self.bottomFrame.pack(fill=X)
+            #heading
+            heading=Label(self.topFrame,text='Give Book',font='arial 15 bold',fg='black',bg='white')
+            heading.place(x=220,y=30)
+            #input boxes
+            #ISBN
+            self.book_name=StringVar()
+            self.lbl_name=Label(self.bottomFrame,text='Book Name:',font='arial 14 bold',fg='black', bg='#CCFFE5')
+            self.lbl_name.place(x=40,y=40)
+            self.combo_name=ttk.Combobox(self.bottomFrame,textvariable=self.book_name)
+            self.combo_name['values']=listBook
+            self.combo_name.current(int(self.book_id)-1)
+            self.combo_name.place(x=150,y=45)
+
+            #Name
+            self.member_name=StringVar()
+            self.lbl_username=Label(self.bottomFrame,text='User Name:',font='arial 14 bold',fg='black', bg='#CCFFE5')
+            self.lbl_username.place(x=40,y=65)       
+            self.member_name=ttk.Combobox(self.bottomFrame,textvariable=self.member_name)
+            self.member_name['values']=listMember
+            self.member_name.place(x=150,y=70)
+            #add Button
+            submitButton=Button(self.bottomFrame,text='Give Book',command=self.lendBook)
+            submitButton.place(x=300,y=240)
+    
+        def lendBook(self):
+            bookName=self.book_name.get()
+            memberName=self.member_name.get()
+            print(bookName,memberName)
+            bookID=bookName.split("-")[1]
+            memberID=memberName.split("-")[0]
+            defStatus="borrowed"
+            print(bookID)
+            print(memberID)
+            #we can reduce the quantity by getting the number using select and reducing it by 1 and updating the datausing update table
+            if bookName and memberName != "":
+                a=cur.execute("SELECT * from maintains where quantity>0 and bookID=?",(bookID,)).fetchall()
+                b=cur.execute("Select count(*) from reserve where BookID=?",(bookID,)).fetchall()
+                print(b)
+                if(len(a)>0):
+                    if(b[0][0]==0):
+                        try:
+                            query="INSERT INTO reserve (clientID,bookID,status) values (?,?,?)"
+                            cur.execute(query,(memberID,bookID,defStatus))
+                            conn.commit()
+                            messagebox.showinfo("Success","successfully added to database!",icon="info")
+                            cur.execute("UPDATE Maintains SET quantity =quantity-1 where bookID=?",(self.book_id))
+                            conn.commit()
+                        except:
+                            messagebox.showerror("Error","Cannot add to DB",icon="error")
+                    else:
+                        messagebox.showerror("Error","You already borrowed a Book",icon="error")
+                else:
+                    messagebox.showerror("Error","NOT AVAILABLE",icon="error")
+            else:
+                messagebox.showerror("Error","Field is empty",icon="error")
+            
     def searchBooks(self):
         value = self.searchEntry.get()
         print(value)
@@ -162,9 +280,9 @@ class Main(object):
         self.list_books.delete(0,END)
         count=0
         for b in search:
-                print(b)
-                self.list_books.insert(count,str(b[0]+"-"+b[1]))
-                count+=1
+            print(b)
+            self.list_books.insert(count,str(str(b[5])+"-"+b[0]+"-"+b[1]))
+            count+=1
      
     def listData(self):
         value=self.choice.get()
@@ -179,11 +297,9 @@ class Main(object):
                 count+=1
         elif value==2:
             avail=cur.execute("Select * from Maintains where quantity>?",(0,)).fetchall()
-            
             self.list_books.delete(0,END)
             count=0
             for b in avail:
-                print(b)
                 self.list_books.insert(count,str(b[1]))
                 count+=1
         elif value==3:
@@ -191,7 +307,7 @@ class Main(object):
             self.list_books.delete(0,END)
             count=0
             for b in all:
-                self.list_books.insert(count,str(b[0]+"-"+b[1]))
+                self.list_books.insert(count,str(str(b[5])+"-"+b[0]+"-"+b[1]))
                 count+=1
         else:
             all=cur.execute("Select * from clients").fetchall()

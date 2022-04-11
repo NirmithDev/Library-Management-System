@@ -34,6 +34,7 @@ create table Books(
     genre           varchar(10),
     --publisher_id    varchar(5),
     page_count      varchar(4),
+    id              integer not null,
     primary key (ISBN)--,
     --foreign key (publisher_id) references publisher
 );
@@ -59,8 +60,8 @@ create table history(
 --reserve book table
 create table Reserve(
     ReserveID   integer Not Null,
-    clientID    integer,
-    bookID      varchar(6),
+    clientID    text,
+    bookID      text,
     status      varchar(40),
     primary key (ReserveID),
     foreign key (BookID) REFERENCES Books (ISBN),
@@ -141,15 +142,15 @@ Insert or replace into publisher (publisher_id,name,email) values ('pub3','Allen
 --Insert or Replace into Books (ISBN,title,author,genre,publisher_id,page_count) values ('0261102354','The Fellowship of the Ring','JRR Tolkein','adventure','pub3','423');
 --Insert or Replace into Books (ISBN,title,author,genre,publisher_id,page_count) values ('0345339738','The Return of the King','JRR Tolkein','adventure','pub3','416');
 
-Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('0199537976','Three Men In A Boat','Jerome K. Jerome','adventure','185');
-Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('1510096004','Idle Thoughts of an Idle Fellow','Jerome K. Jerome','humor','210');
-Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('1515252604','The New Utopia','Jerome K. Jerome','fiction','190');
-Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('0590353403','Harry Potter and the Sorcerer''s / Philosopher''s Stone','J.K.Rowling','adventure','309');
-Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('0439064864','Harry Potter and the Chamber of Secrets','J.K. Rowling','adventure','251');
-Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('0747542155','Harry Potter and the Prisoner of Azkaban','J.K. Rowling','fiction','317');
-Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('9780261102','The Hobbit','JRR Tolkein','adventure','310');
-Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('0261102354','The Fellowship of the Ring','JRR Tolkein','adventure','423');
-Insert or Replace into Books (ISBN,title,author,genre,page_count) values ('0345339738','The Return of the King','JRR Tolkein','adventure','416');
+Insert or Replace into Books (ISBN,title,author,genre,page_count,id) values ('0199537976','Three Men In A Boat','Jerome K. Jerome','adventure','185',1);
+Insert or Replace into Books (ISBN,title,author,genre,page_count,id) values ('1510096004','Idle Thoughts of an Idle Fellow','Jerome K. Jerome','humor','210',2);
+Insert or Replace into Books (ISBN,title,author,genre,page_count,id) values ('1515252604','The New Utopia','Jerome K. Jerome','fiction','190',3);
+Insert or Replace into Books (ISBN,title,author,genre,page_count,id) values ('0590353403','Harry Potter and the Sorcerer''s / Philosopher''s Stone','J.K.Rowling','adventure','309',4);
+Insert or Replace into Books (ISBN,title,author,genre,page_count,id) values ('0439064864','Harry Potter and the Chamber of Secrets','J.K. Rowling','adventure','251',5);
+Insert or Replace into Books (ISBN,title,author,genre,page_count,id) values ('0747542155','Harry Potter and the Prisoner of Azkaban','J.K. Rowling','fiction','317',6);
+Insert or Replace into Books (ISBN,title,author,genre,page_count,id) values ('9780261102','The Hobbit','JRR Tolkein','adventure','310',7);
+Insert or Replace into Books (ISBN,title,author,genre,page_count,id) values ('0261102354','The Fellowship of the Ring','JRR Tolkein','adventure','423',8);
+Insert or Replace into Books (ISBN,title,author,genre,page_count,id) values ('0345339738','The Return of the King','JRR Tolkein','adventure','416',9);
 --Select * from Books;
 
 --adding data for quantity of each book
