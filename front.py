@@ -32,13 +32,13 @@ class Main(object):
             count_staff=cur.execute("Select count(*) from staff").fetchall()
             count_client=cur.execute("Select count(*) from clients").fetchall()
             count_totalBook=cur.execute("SELECT quantity From Maintains").fetchall()
-            print(count_totalBook)
+            #print(count_totalBook)
             sum_totalBook=0
             for a in count_totalBook:
-                print(a)
+                #print(a)
                 sum_totalBook+=a[0]
             sum_totalBook+=count_reserrve[0][0]
-            print(sum_totalBook)
+            #print(sum_totalBook)
             self.lblBookCount.config(text='Total Number of UNIQUE Books: '+str(count_book[0][0]))
             self.lblMemberCount.config(text='Total Number of Members: '+str(count_staff[0][0]+count_client[0][0]))
             self.lblTakenCount.config(text='Total Number of Borrowed Books: '+str(count_reserrve[0][0]))
@@ -46,6 +46,7 @@ class Main(object):
             self.lblClientCount.config(text='Total Number of Client: '+str(count_client[0][0]))
             self.lblTotalBook.config(text='Total Number of Books: '+str(sum_totalBook))
             displayBooks(self)
+            displayStudents(self)
 
         #display books for admin to view
         def displayBooks(self):
@@ -53,19 +54,18 @@ class Main(object):
             count=0
             self.list_books.delete(0,END)
             for b in books:
-                print(b)
+                #print(b)
                 self.list_books.insert(count,str(str(b[5])+"-"+b[0]+"-"+b[1]))
                 count+=1
             def bookInfo(evt):
                 value = str(self.list_books.get(self.list_books.curselection()))
                 id=value.split('-')[1]
-                #print(id)
+                #maybe add an if else condition that checks for students and displays their corresponding data
                 book=cur.execute("SELECT * FROM Books WHERE ISBN=?",(id,))
-                #print(book)
                 book_information=book.fetchall()
                 bookQ=cur.execute(f"SELECT quantity FROM Maintains WHERE bookID=?",(id,))
                 bookQ=cur.fetchall()
-                print("here",bookQ)
+                #print("here",bookQ)
                 #print(book_information)
                 self.list_details.delete(0,'end')
                 self.list_details.insert(0,"ISBN: "+book_information[0][0])
@@ -91,6 +91,44 @@ class Main(object):
             self.tabs.bind('<<NotebookTabChanged>>',displayStatistics)
             # self.tabs.bind('<ButtonRelease-1>',displayBooks)
             self.list_books.bind('<Double-Button-1>',doubleClick)
+
+        def displayStudents(self):
+            print("Here I Am")
+            books=cur.execute("Select * FROM clients").fetchall()
+            count=0
+            self.list_students.delete(0,END)
+            for b in books:
+                #print(b)
+                self.list_students.insert(count,str(str(b[0])+"-"+b[1]))
+                count+=1
+            def studentInfo(evt):
+                value = str(self.list_students.get(self.list_students.curselection()))
+                print("HERE I AM")
+                print(value)
+                id=value.split('-')[1]
+                print(id)
+                book=cur.execute("SELECT * FROM clients WHERE name=?",(id,))
+                a=book.fetchall()
+                print(a[0][0])
+                memBorrows=cur.execute("Select * From Reserve where clientID=? and status=?",(a[0][0],"borrowed",))
+                b=memBorrows.fetchall()
+                print(b)
+                #after we get ID we search to see if they have any books borrowed and we display that
+                self.list_details2.delete(0,'end')
+                self.list_details2.insert(0,"Name: "+a[0][1])
+                self.list_details2.insert(1,"ID: "+str(a[0][0]))
+                self.list_details2.insert(2,"Borrows: ")
+                cou=3
+                for c in b:
+                    self.list_details2.insert(cou,str("BookID: "+c[2]))
+                    cou+=1
+                if cou==3:
+                    self.list_details2.insert(cou,str("Student Has Not Borrowed any Books"))
+                
+
+            self.list_students.bind('<<ListboxSelect>>',studentInfo)
+            self.tabs.bind('<<NotebookTabChanged>>',displayStatistics)
+
 
         mainFrame = Frame(self.master)
         mainFrame.pack()
@@ -130,11 +168,9 @@ class Main(object):
         rb1=Radiobutton(list_bar,text='Borrowed',var=self.choice,value=1,bg='orange',fg='white')
         rb2=Radiobutton(list_bar,text='Available',var=self.choice,value=2,bg='orange',fg='white')
         rb3=Radiobutton(list_bar,text='All Books',var=self.choice,value=3,bg='orange',fg='white')
-        rb4=Radiobutton(list_bar,text='Students',var=self.choice,value=4,bg='orange',fg='white')
         rb1.grid(row=1,column=0)
         rb2.grid(row=1,column=1)
         rb3.grid(row=1,column=2)
-        rb4.grid(row=1,column=3)
         self.optBtn = Button(list_bar,text='Display',font='arial 12 bold',bg='orange',fg='white',command=self.listData)
         self.optBtn.grid(row=1,column=4,padx=30,pady=10)
 
@@ -157,8 +193,10 @@ class Main(object):
         self.tabs.pack()
         self.tab1=ttk.Frame(self.tabs)
         self.tab2=ttk.Frame(self.tabs)
+        self.tab3=ttk.Frame(self.tabs)
         self.tabs.add(self.tab1,text='Library Management',compound=LEFT)
         self.tabs.add(self.tab2,text='Reports',compound=LEFT)
+        self.tabs.add(self.tab3,text='Students',compound=LEFT)
 
         self.list_books = Listbox(self.tab1,width=40,height=30,bd=5,font='times 12 bold')
         self.sb=Scrollbar(self.tab1,orient=VERTICAL)
@@ -182,9 +220,19 @@ class Main(object):
         self.lblClientCount.grid(row=5,sticky=W)
         self.lblTotalBook=Label(self.tab2,text="",pady=20,font='Helvetica 12')
         self.lblTotalBook.grid(row=6,sticky=W)
+        #students Details
+        self.list_students = Listbox(self.tab3,width=40,height=30,bd=5,font='times 12 bold')
+        self.sb=Scrollbar(self.tab3,orient=VERTICAL)
+        self.list_students.grid(row=0,column=0,padx=(10,0),pady=10,sticky=N)
+        self.sb.config(command=self.list_students.yview)
+        self.list_students.config(yscrollcommand=self.sb.set)
+        self.sb.grid(row=0,column=0,sticky=N+S+E)
+        self.list_details2 = Listbox(self.tab3,width=60,height=30,bd=5,font='times 12 bold')
+        self.list_details2.grid(row=0,column=1,padx=(10,0),pady=10,sticky=N)
 
         displayBooks(self)
         displayStatistics(self)
+        displayStudents(self)
 
     def addBook(self):
         add=addBook.AddBook()
@@ -243,26 +291,25 @@ class Main(object):
         def lendBook(self):
             bookName=self.book_name.get()
             memberName=self.member_name.get()
-            print(bookName,memberName)
             bookID=bookName.split("-")[1]
             memberID=memberName.split("-")[0]
             defStatus="borrowed"
-            print(bookID)
-            print(memberID)
-            #we can reduce the quantity by getting the number using select and reducing it by 1 and updating the datausing update table
             if bookName and memberName != "":
                 a=cur.execute("SELECT * from maintains where quantity>0 and bookID=?",(bookID,)).fetchall()
-                b=cur.execute("Select count(*) from reserve where BookID=?",(bookID,)).fetchall()
-                print(b)
+                b=cur.execute("Select count(*) from reserve where BookID=? and clientID=?",(bookID,memberID,)).fetchall()
+                c=cur.execute("Select * from Maintains where bookID=?",(bookID,)).fetchall()
+                quantUpd=c[0][0]
                 if(len(a)>0):
                     if(b[0][0]==0):
                         try:
+                            quantUpd=quantUpd-1
                             query="INSERT INTO reserve (clientID,bookID,status) values (?,?,?)"
                             cur.execute(query,(memberID,bookID,defStatus))
                             conn.commit()
-                            messagebox.showinfo("Success","successfully added to database!",icon="info")
-                            cur.execute("UPDATE Maintains SET quantity =quantity-1 where bookID=?",(self.book_id))
+                            quer="UPDATE Maintains SET quantity=? WHERE (bookID)=?"
+                            cur.execute(quer,(quantUpd,bookID))
                             conn.commit()
+                            messagebox.showinfo("Success","successfully added to database!",icon="info")
                         except:
                             messagebox.showerror("Error","Cannot add to DB",icon="error")
                     else:
@@ -274,47 +321,37 @@ class Main(object):
             
     def searchBooks(self):
         value = self.searchEntry.get()
-        print(value)
         search=cur.execute("SELECT * FROM Books where title LIKE ?",('%'+value+'%',)).fetchall()
-        print(search)
         self.list_books.delete(0,END)
         count=0
         for b in search:
-            print(b)
             self.list_books.insert(count,str(str(b[5])+"-"+b[0]+"-"+b[1]))
             count+=1
      
     def listData(self):
         value=self.choice.get()
-        print(value)
         if value==1:
             taken=cur.execute("Select * from Reserve where status=?",("borrowed",)).fetchall()
             self.list_books.delete(0,END)
             count=1
             self.list_books.insert(0,str("FORMAT IS BOOKID-STATUS-CLIENTID"))
             for b in taken:
-                self.list_books.insert(count,str(b[2]+"-"+b[3]+"-"+f'{b[1]}'))
+                self.list_books.insert(count,str(f'{b[1]}'+"-"+b[2]+"-"+b[3]))
                 count+=1
         elif value==2:
             avail=cur.execute("Select * from Maintains where quantity>?",(0,)).fetchall()
             self.list_books.delete(0,END)
             count=0
             for b in avail:
-                self.list_books.insert(count,str(b[1]))
+                self.list_books.insert(count,str(str(count+1)+"-"+b[1]))
                 count+=1
-        elif value==3:
+        else:
             all=cur.execute("Select * from Books").fetchall()
             self.list_books.delete(0,END)
             count=0
             for b in all:
+                #print(b)
                 self.list_books.insert(count,str(str(b[5])+"-"+b[0]+"-"+b[1]))
-                count+=1
-        else:
-            all=cur.execute("Select * from clients").fetchall()
-            self.list_books.delete(0,END)
-            count=0
-            for b in all:
-                self.list_books.insert(count,str(b[1]))
                 count+=1
 
 
